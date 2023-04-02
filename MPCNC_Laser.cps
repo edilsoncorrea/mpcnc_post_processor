@@ -6,9 +6,9 @@ MPCNC posts processor for milling and laser/plasma cutting.
 
 */
 
-description = "MPCNC Milling/Laser - Marlin 2.0, Grbl 1.1, RepRap";
-vendor = "flyfisher604";
-vendorUrl = "https://github.com/flyfisher604/mpcnc_post_processor";
+description = "MPCNC Milling/Laser - Marlin 2.0";
+vendor = "edilsoncorrea";
+vendorUrl = "https://github.com/edilsoncorrea/mpcnc_post_processor";
 
 // Internal properties
 certificationLevel = 2;
@@ -29,7 +29,7 @@ var eFirmware = {
     }
   };
 
-var fw =  eFirmware.MARLIN; 
+var fw = eFirmware.MARLIN; 
 
 var eComment = {
     Off: 0,
@@ -83,7 +83,7 @@ properties = {
 
   fr0_TravelSpeedXY: 2500,             // High speed for travel movements X & Y (mm/min)
   fr1_TravelSpeedZ: 300,               // High speed for travel movements Z (mm/min)
-  fr2_EnforceFeedrate: true,          // Add feedrate to each movement line
+  fr2_EnforceFeedrate: true,           // Add feedrate to each movement line
   frA_ScaleFeedrate: false,            // Will feedrated be scaled
   frB_MaxCutSpeedXY: 900,              // Max speed for cut movements X & Y (mm/min)
   frC_MaxCutSpeedZ: 180,               // Max speed for cut movements Z (mm/min)
@@ -122,8 +122,8 @@ properties = {
 
   cl0_coolantA_Mode: eCoolant.Off,  // Enable issuing g-codes for control Coolant channel A 
   cl1_coolantB_Mode: eCoolant.Off,  // Use issuing g-codes for control Coolant channel B 
-  cl2_coolantAOn: "M42 P6 S255",    // GCode command to turn on Coolant channel A
-  cl3_coolantAOff: "M42 P6 S0",     // Gcode command to turn off Coolant channel A
+  cl2_coolantAOn: "M42 P8 S255",    // GCode command to turn on Coolant channel A
+  cl3_coolantAOff: "M42 P8 S0",     // Gcode command to turn off Coolant channel A
   cl4_coolantBOn: "M42 P11 S255",   // GCode command to turn on Coolant channel B
   cl5_coolantBOff: "M42 P11 S0",    // Gcode command to turn off Coolant channel B 
   cl6_cust_coolantAOn: "",          // Custom GCode command to turn on Coolant channel A
@@ -301,6 +301,7 @@ propertyDefinitions = {
     values: [
       { title: "Fan - M106 S{PWM}/M107", id: 106 },
       { title: "Spindle - M3 O{PWM}/M5", id: 3 },
+      { title: "Spindle - M3 I S{PWM}/M5 I", id: 999 },
       { title: "Pin - M42 P{pin} S{PWM}", id: 42 },
     ]
   },
@@ -382,9 +383,9 @@ propertyDefinitions = {
   },
   cl2_coolantAOn: {
       title: "Coolant: A Enable", description: "GCode to turn On coolant channel A", group: 8,
-      type: "enum", default_mm: "M42 P6 S255", default_in: "M42 P6 S255",
+      type: "enum", default_mm: "M42 P8 S255", default_in: "M42 P8 S255",
       values: [
-        { title: "Mrln: M42 P6 S255", id: "M42 P6 S255" },
+        { title: "Mrln: M42 P8 S255", id: "M42 P8 S255" },
         { title: "Mrln: M42 P11 S255", id: "M42 P11 S255" },
         { title: "Grbl: M7 (mist)", id: "M7" },
         { title: "Grbl: M8 (flood)", id: "M8" },
@@ -393,9 +394,9 @@ propertyDefinitions = {
   },
   cl3_coolantAOff: {
     title: "Coolant: A Disable", description: "Gcode to turn Off coolant A", group: 8,
-    type: "enum", default_mm: "M42 P6 S0", default_in: "M42 P6 S0",
+    type: "enum", default_mm: "M42 P8 S0", default_in: "M42 P8 S0",
     values: [
-      { title: "Mrln: M42 P6 S0", id: "M42 P6 S0" },
+      { title: "Mrln: M42 P8 S0", id: "M42 P8 S0" },
       { title: "Mrln: M42 P11 S0", id: "M42 P11 S0" },
       { title: "Grbl: M9 (off)", id: "M9" },
       { title: "Use custom", id: "Use custom" }
@@ -813,7 +814,10 @@ function laserOn(power) {
           writeBlock(mFormat.format(3), oFormat.format(laser_pwm));
         }
         break;
-      case 42:
+        case 999:
+          writeBlock(mFormat.format(3), "I", sFormat.format(laser_pwm));
+          break;
+        case 42:
         writeBlock(mFormat.format(42), pFormat.format(properties.cutter5_MarlinPin), sFormat.format(laser_pwm));
         break;
     }
@@ -835,9 +839,12 @@ function laserOff() {
       case 3:
         writeBlock(mFormat.format(5));
         break;
+      case 999:
+        writeBlock(mFormat.format(5), "I");
+        break;
       case 42:
         writeBlock(mFormat.format(42), pFormat.format(properties.cutter5_MarlinPin), sFormat.format(0));
-        break;
+      break;
     }
   }
 }
